@@ -37,6 +37,13 @@ AUTOMAKE_ARCHIVE="${FTP_GNU_DOWNLOAD_BASE}/automake/automake-${AUTOMAKE_VERSION}
 # check required programs
 REQ_PROG_LIST="${CXX} ${CC} unzip bison flex ${MAKE} makeinfo patch"
 
+# set cpu cores for make
+CPU_CORES=4
+
+if which nproc > /dev/null; then
+  CPU_CORES=`nproc`
+fi
+
 # use curl or wget?
 if [ ! -z $USE_WGET ]; then
   REQ_PROG_LIST+=" wget"
@@ -147,8 +154,8 @@ sh ./configure \
            || exit 1
 
 ${MAKE} configure-bfd || exit 1
-${MAKE} -C bfd stmp-lcoff-h || exit 1
-${MAKE} || exit 1
+${MAKE} -j $CPU_CORES -C bfd stmp-lcoff-h || exit 1
+${MAKE} -j $CPU_CORES || exit 1
 
 if [ ! -z $MAKE_CHECK ]; then
   echo "Run ${MAKE} check"
@@ -193,7 +200,7 @@ cd $BUILDDIR
 tar xJf ../../download/autoconf-${AUTOCONF_VERSION}.tar.xz || exit 1
 cd autoconf-${AUTOCONF_VERSION}/
 ./configure --prefix=$BUILDDIR/tmpinst || exit 1
-${MAKE} all install || exit 1
+${MAKE} -j $CPU_CORES all install || exit 1
 
 echo "Building automake"
 cd $BUILDDIR
@@ -202,7 +209,7 @@ cd automake-${AUTOMAKE_VERSION}/
 PATH="$BUILDDIR//tmpinst/bin:$PATH" \
 ./configure --prefix=$BUILDDIR/tmpinst || exit 1
 PATH="$BUILDDIR//tmpinst/bin:$PATH" \
-${MAKE} all install || exit 1
+${MAKE} -j $CPU_CORES all install || exit 1
 
 # build GNU sed if needed.
 SED=sed
@@ -212,7 +219,7 @@ if [ ! -z $SED_VERSION ]; then
   tar xjf ../../download/sed-${SED_VERSION}.tar.bz2 || exit 1
   cd sed-${SED_VERSION}/
   ./configure --prefix=$BUILDDIR/tmpinst || exit 1
-  ${MAKE} all install || exit 1
+  ${MAKE} -j $CPU_CORES all install || exit 1
   SED=$BUILDDIR/tmpinst/bin/sed
 fi
 
@@ -274,7 +281,7 @@ cd $BUILDDIR/gmp-*/
 # On some systems, building gmp will fail if CFLAGS is set.
 # Unset CFLAGS during building gmp.
 env -u CFLAGS ./configure --enable-fat --prefix=$BUILDDIR/tmpinst --enable-static --disable-shared || exit 1
-${MAKE} all || exit 1
+${MAKE} -j $CPU_CORES all || exit 1
 if [ ! -z $MAKE_CHECK ]; then
   echo "Run ${MAKE} check"
   ${MAKE} check || exit 1
@@ -284,7 +291,7 @@ ${MAKE} install || exit 1
 echo "Building mpfr"
 cd $BUILDDIR/mpfr-${MPFR_VERSION}/
 ./configure --prefix=$BUILDDIR/tmpinst --with-gmp=$BUILDDIR/tmpinst --enable-static --disable-shared || exit 1
-${MAKE} all || exit 1
+${MAKE} -j $CPU_CORES all || exit 1
 if [ ! -z $MAKE_CHECK ]; then
   echo "Run ${MAKE} check"
   ${MAKE} check || exit 1
@@ -294,7 +301,7 @@ ${MAKE} install || exit 1
 echo "Building mpc"
 cd $BUILDDIR/mpc-${MPC_VERSION}/
 ./configure --prefix=$BUILDDIR/tmpinst --with-gmp=$BUILDDIR/tmpinst --with-mpfr=$BUILDDIR/tmpinst --enable-static --disable-shared || exit 1
-${MAKE} all || exit 1
+${MAKE} -j $CPU_CORES all || exit 1
 if [ ! -z $MAKE_CHECK ]; then
   echo "Run ${MAKE} check"
   ${MAKE} check || exit 1
@@ -325,7 +332,7 @@ PATH="$BUILDDIR//tmpinst/bin:$PATH" \
                                  --enable-languages=${ENABLE_LANGUAGES} \
                                  || exit 1
 
-${MAKE} j=4 "PATH=$BUILDDIR/tmpinst/bin:$PATH" || exit 1
+${MAKE} -j $CPU_CORES "PATH=$BUILDDIR/tmpinst/bin:$PATH" || exit 1
 
 # Workaround for MinGW. Need to fix some .deps/*.Plo files.
 # Fix from
