@@ -1,0 +1,33 @@
+name: DJGPP Toolchain (Linux)
+
+on:
+  workflow_dispatch:
+
+env:
+  DJGPP_PREFIX: /home/runner/djgpp-toolchain
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Source Tree
+      uses: actions/checkout@v3
+
+    - name: Setup build environment
+      run: |
+          sudo apt -y update
+          sudo apt -y install build-essential bison flex curl texinfo zlib1g-dev unzip
+
+    - name: Build
+      run: |
+          ./build-djgpp.sh 12.2.0-i386
+    
+    - name: Archive
+      run: |
+          tar -C /home/runner/djgpp-toolchain -cvzf toolchain.tar.gz .
+      
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: DJGPP-12.2.0-i386-linux
+        path: toolchain.tar.gz
